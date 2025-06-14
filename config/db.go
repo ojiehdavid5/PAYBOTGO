@@ -29,3 +29,4 @@ func Connect() (*gorm.DB, error) {
 	fmt.Println("Database Migrated")
 	return DB, err
 }
+
