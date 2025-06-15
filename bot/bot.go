@@ -65,6 +65,7 @@ func StartBot() {
 
         default:
             bot.Send(tgbotapi.NewMessage(chatID, "Invalid command."))
+			
 		}
 	}
 }	
