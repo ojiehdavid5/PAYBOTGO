@@ -7,21 +7,29 @@ import(
 	"fmt"
 		// "github.com/gofiber/fiber/v2"
 		// "github.com/chuks/PAYBOTGO/config"
+		"strings"
 
 
 )
+// UserSession represents the state of a user's registration process
+type UserSession struct {
+    Step     string
+    FullName string
+    Email    string
+    Password string
+}
+
+// Global map to store user states
+var userStates = make(map[int64]*UserSession)
+
+
 func StartBot() {
 		err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-// db, err := database.Connect()
-// 	if err != nil {
-// 		log.Fatalf("Error connecting to database: %v", err)
-// 	}
-// 	// fmt.Println(db)
-// 	app := fiber.New()
+
 
 
 
@@ -52,13 +60,50 @@ func StartBot() {
         chatID := update.Message.Chat.ID
         text := update.Message.Text
 
+		session,exists := userStates[chatID]
+
+		 if !exists && text == "/register" {
+            userStates[chatID] = &UserSession{Step: "awaiting_name"}
+            bot.Send(tgbotapi.NewMessage(chatID, "What's your full name?"))
+            continue
+        }
+
+		if exists {
+            switch session.Step {
+            case "awaiting_name":
+                session.FullName = text
+                session.Step = "awaiting_email"
+                bot.Send(tgbotapi.NewMessage(chatID, "What's your email?"))
+            case "awaiting_email":
+                session.Email = text
+                session.Step = "awaiting_password"
+                bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+            case "awaiting_password":
+                session.Password = text
+                delete(userStates, chatID) // remove session
+
+                first, last := splitName(session.FullName)
+                payload := map[string]interface{}{
+                    "first_name":  first,
+                    "last_name":   last,
+                    "email":       session.Email,
+                    "password":    session.Password,
+                    "telegram_id": chatID,
+                }
+                callAPI("/api/register", payload)
+				fmt.Println(payload)
+                bot.Send(tgbotapi.NewMessage(chatID, "Registration submitted."))
+            }
+            continue
+        }
+
         switch text {
         case "/start":
             bot.Send(tgbotapi.NewMessage(chatID, "Welcome! Use /register or /login."))
 
         case "/register":
             bot.Send(tgbotapi.NewMessage(chatID, "Send your details like: `FirstName|LastName|email@example.com|password`"))
-			fmt.Println(update)
+			        userStates[chatID] = &UserSession{Step: "awaiting_name"}
 
         case "/login":
             bot.Send(tgbotapi.NewMessage(chatID, "Send email and password like: `email@example.com|password`"))
@@ -69,3 +114,17 @@ func StartBot() {
 		}
 	}
 }	
+
+func splitName(fullName string) (string, string) {
+    names := strings.Fields(fullName)
+    if len(names) > 1 {
+        return names[0], strings.Join(names[1:], " ")
+    }
+    return fullName, ""
+}
+
+// Helper function to call API (you need to implement this)
+func callAPI(endpoint string, payload map[string]interface{}) {
+    // Implement API call logic here
+    fmt.Printf("Calling API: %s with payload: %v\n", endpoint, payload)
+}
