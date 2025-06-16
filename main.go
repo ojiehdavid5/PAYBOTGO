@@ -6,6 +6,7 @@ import (
 	"github.com/chuks/PAYBOTGO/bot"
 	"github.com/chuks/PAYBOTGO/config"
 	"github.com/gofiber/fiber/v2"
+	"github.com/chuks/PAYBOTGO/handlers"
 )
 
 func main() {
@@ -16,7 +17,7 @@ func main() {
 
 		app := fiber.New()
 
-	// // app.Post("/api/register", auth.Register)
+	app.Post("/api/auth/register", handler.Register)
 
 app.Listen(":3000")
 
