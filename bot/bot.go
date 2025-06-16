@@ -8,6 +8,9 @@ import(
 		// "github.com/gofiber/fiber/v2"
 		// "github.com/chuks/PAYBOTGO/config"
 		"strings"
+	"bytes"
+	"encoding/json"
+	"net/http"
 
 
 )
@@ -90,7 +93,7 @@ func StartBot() {
                     "password":    session.Password,
                     "telegram_id": chatID,
                 }
-                callAPI("/api/register", payload)
+                callAPI("/api/auth/register", payload)
 				fmt.Println(payload)
                 bot.Send(tgbotapi.NewMessage(chatID, "Registration submitted."))
             }
@@ -126,5 +129,6 @@ func splitName(fullName string) (string, string) {
 // Helper function to call API (you need to implement this)
 func callAPI(endpoint string, payload map[string]interface{}) {
     // Implement API call logic here
-    fmt.Printf("Calling API: %s with payload: %v\n", endpoint, payload)
+	jsonData, _ := json.Marshal(payload)
+	http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
 }
