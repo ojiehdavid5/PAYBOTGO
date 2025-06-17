@@ -1,16 +1,14 @@
 package routes
 
-import ("github.com/gofiber/fiber/v2"
-	"github.com/chuks/PAYBOTGO/handlers"
-
-
+import (
+	handler "github.com/chuks/PAYBOTGO/handlers"
+	"github.com/gofiber/fiber/v2"
 )
 
 // SetupRoutes setup router api
 func SetupRoutes(app *fiber.App) {
 
 	api := app.Group("/api")
-
 
 	// Auth
 	auth := api.Group("/auth")

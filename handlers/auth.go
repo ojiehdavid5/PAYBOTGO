@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"github.com/chuks/PAYBOTGO/utils"
-	"github.com/gofiber/fiber/v2"
 	"github.com/chuks/PAYBOTGO/config"
 	"github.com/chuks/PAYBOTGO/models"
+	"github.com/chuks/PAYBOTGO/utils"
+	"github.com/gofiber/fiber/v2"
 )
 
 type authRequest struct {
@@ -22,7 +22,7 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 	user := models.Student{
-	Email:        req.Email,
+		Email:    req.Email,
 		Password: utils.GeneratePassword(req.Password),
 	}
 	res := config.DB.Create(&user)
@@ -37,32 +37,32 @@ func Register(c *fiber.Ctx) error {
 }
 
 func Login(c *fiber.Ctx) error {
- var req authRequest
- if err := c.BodyParser(&req); err != nil {
-  return c.Status(400).JSON(fiber.Map{
-   "message": err.Error(),
-  })
- }
- var user models.Student
- res := config.DB.Where("email = ?", req.Email).First(&user)
- if res.Error != nil {
-  return c.Status(400).JSON(fiber.Map{
-   "message": "user not found",
-  })
- }
- if !utils.ComparePassword(user.Password, req.Password) {
-  return c.Status(400).JSON(fiber.Map{
-   "message": "incorrect password",
-  })
- }
+	var req authRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	var user models.Student
+	res := config.DB.Where("email = ?", req.Email).First(&user)
+	if res.Error != nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "user not found",
+		})
+	}
+	if !utils.ComparePassword(user.Password, req.Password) {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "incorrect password",
+		})
+	}
 
- token, err := utils.GenerateToken(user.ID)
- if err != nil {
-  return c.Status(500).JSON(fiber.Map{
-   "message": err.Error(),
-  })
- }
- return c.JSON(fiber.Map{
-  "token": token,
- })
+	token, err := utils.GenerateToken(user.ID)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+	return c.JSON(fiber.Map{
+		"token": token,
+	})
 }

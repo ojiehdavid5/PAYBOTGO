@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/chuks/PAYBOTGO/models"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"github.com/chuks/PAYBOTGO/models"
 )
 
 var DB *gorm.DB
