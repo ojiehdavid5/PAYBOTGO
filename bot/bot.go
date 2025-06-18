@@ -94,7 +94,22 @@ func StartBot() {
 				callAPI("/api/auth/register", payload)
 				fmt.Println(payload)
 				bot.Send(tgbotapi.NewMessage(chatID, "Registration submitted."))
-			}
+                case "awaiting_login_email":
+        session.Email = text
+        session.Step = "awaiting_login_password"
+        bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+    case "awaiting_login_password":
+        session.Password = text
+        delete(userStates, chatID) // remove session
+
+        payload := map[string]any{
+            "email":    session.Email,
+            "password": session.Password,
+        }
+        callAPI("/api/auth/login", payload)
+        fmt.Println(payload)
+        bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
+	}
 			continue
 		}
 
@@ -107,15 +122,17 @@ func StartBot() {
 			userStates[chatID] = &UserSession{Step: "awaiting_name"}
 
 		case "/login":
-			bot.Send(tgbotapi.NewMessage(chatID, "Send email and password like: `email@example.com|password`"))
+			bot.Send(tgbotapi.NewMessage(chatID, "Send email"))
+                userStates[chatID] = &UserSession{Step: "awaiting_login_email"}
+
 
 		default:
 			bot.Send(tgbotapi.NewMessage(chatID, "Invalid command."))
 
 		}
-	}
-}
+    }
 
+}
 func splitName(fullName string) (string, string) {
 	names := strings.Fields(fullName)
 	if len(names) > 1 {
@@ -125,8 +142,9 @@ func splitName(fullName string) (string, string) {
 }
 
 // Helper function to call API (you need to implement this)
-func callAPI(endpoint string, payload map[string]interface{}) {
+func callAPI(endpoint string, payload map[string]interface{})  {
 	// Implement API call logic here
 	jsonData, _ := json.Marshal(payload)
 	http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
+      
 }
