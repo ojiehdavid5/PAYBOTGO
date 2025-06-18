@@ -11,7 +11,7 @@ func GenerateToken(id uint) (string, error) {
 		"user_id": id,
 	})
 
-	t, err := token.SignedString(os.Getenv("JWT_SECRET"))
+	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", err
 	}
