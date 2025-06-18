@@ -5,6 +5,7 @@ import (
 	"github.com/chuks/PAYBOTGO/models"
 	"github.com/chuks/PAYBOTGO/utils"
 	"github.com/gofiber/fiber/v2"
+	"fmt"
 )
 
 type authRequest struct {
@@ -55,13 +56,14 @@ func Login(c *fiber.Ctx) error {
 			"message": "incorrect password",
 		})
 	}
-
 	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
 			"message": err.Error(),
 		})
 	}
+	fmt.Println("ok")
+
 	return c.JSON(fiber.Map{
 		"token": token,
 	})
