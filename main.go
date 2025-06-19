@@ -5,7 +5,7 @@ import (
 
 	"github.com/chuks/PAYBOTGO/bot"
 	"github.com/chuks/PAYBOTGO/config"
-	// handler "github.com/chuks/PAYBOTGO/handlers"
+	handler "github.com/chuks/PAYBOTGO/handlers"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -14,8 +14,8 @@ func main() {
 	app := fiber.New()
 
 	// Set up routes
-	// app.Post("/api/auth/register", handler.Register)
-	// app.Post("/api/auth/login", handler.Login)
+	app.Post("/api/auth/register", handler.Register)
+	app.Post("/api/auth/login", handler.Login)
 
 	// Connect to the database
 	config.ConnectDB()
