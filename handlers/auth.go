@@ -26,7 +26,14 @@ func Register(c *fiber.Ctx) error {
 		Email:    req.Email,
 		Password: utils.GeneratePassword(req.Password),
 	}
-	res := config.DB.Create(&user)
+	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
+	if res.Error == nil {
+		return c.Status(400).JSON(fiber.Map{
+			"message": "user already exists",
+		})
+	}
+
+	res = config.DB.Create(&user)
 	if res.Error != nil {
 		return c.Status(400).JSON(fiber.Map{
 			"message": res.Error.Error(),

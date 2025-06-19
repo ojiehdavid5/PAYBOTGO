@@ -91,9 +91,17 @@ func StartBot() {
 					"password":    session.Password,
 					"telegram_id": chatID,
 				}
-				callAPI("/api/auth/register", payload)
-				fmt.Println(payload)
-				bot.Send(tgbotapi.NewMessage(chatID, "Registration submitted."))
+				err:=callAPI("/api/auth/register", payload)
+
+                fmt.Println(err);
+
+				if err != nil {
+					bot.Send(tgbotapi.NewMessage(chatID, "Registration failed."))
+					return
+				}else{
+                   bot.Send(tgbotapi.NewMessage(chatID, "Registration successful."))
+                }
+
                 case "awaiting_login_email":
         session.Email = text
         session.Step = "awaiting_login_password"
@@ -106,7 +114,8 @@ func StartBot() {
             "email":    session.Email,
             "password": session.Password,
         }
-        callAPI("/api/auth/login", payload)
+        //  err:=callAPI("/api/auth/login", payload)
+
         fmt.Println(payload)
         bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
 	}
@@ -142,9 +151,12 @@ func splitName(fullName string) (string, string) {
 }
 
 // Helper function to call API (you need to implement this)
-func callAPI(endpoint string, payload map[string]interface{})  {
+func callAPI(endpoint string, payload map[string]interface{})error  {
 	// Implement API call logic here
 	jsonData, _ := json.Marshal(payload)
-	http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
+	_,err := http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
+return err
+     //i want to return an error 
+
       
 }
