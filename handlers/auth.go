@@ -1,11 +1,12 @@
 package handler
 
 import (
+	"fmt"
+
 	"github.com/chuks/PAYBOTGO/config"
 	"github.com/chuks/PAYBOTGO/models"
 	"github.com/chuks/PAYBOTGO/utils"
 	"github.com/gofiber/fiber/v2"
-	"fmt"
 )
 
 type authRequest struct {

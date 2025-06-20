@@ -8,7 +8,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 
-	// "github.com/gofiber/fiber/v2"
 	// "github.com/chuks/PAYBOTGO/config"
 	"bytes"
 	"encoding/json"
@@ -91,12 +90,12 @@ func StartBot() {
 					"password":    session.Password,
 					"telegram_id": chatID,
 				}
-				err:=callAPI("/api/auth/register", payload)
+err:=callAPI("/api/auth/register", payload)         
 
                 fmt.Println(err);
 
 				if err != nil {
-					bot.Send(tgbotapi.NewMessage(chatID, "Registration failed."))
+					bot.Send(tgbotapi.NewMessage(chatID, err.Error()))
 					return
 				}else{
                    bot.Send(tgbotapi.NewMessage(chatID, "Registration successful."))
@@ -114,8 +113,12 @@ func StartBot() {
             "email":    session.Email,
             "password": session.Password,
         }
-        //  err:=callAPI("/api/auth/login", payload)
-
+err:=callAPI("/api/auth/login", payload)
+if err != nil {
+        bot.Send(tgbotapi.NewMessage(chatID, "Login failed."))
+}else{
+    bot.Send(tgbotapi.NewMessage(chatID, "Login successful."))
+}
         fmt.Println(payload)
         bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
 	}
@@ -152,11 +155,21 @@ func splitName(fullName string) (string, string) {
 
 // Helper function to call API (you need to implement this)
 func callAPI(endpoint string, payload map[string]interface{})error  {
+
 	// Implement API call logic here
 	jsonData, _ := json.Marshal(payload)
-	_,err := http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
-return err
-     //i want to return an error 
+	resp, err := http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
 
-      
+    fmt.Println(err)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+    if resp.StatusCode == http.StatusBadRequest {
+		return fmt.Errorf("user already exists")
+	}
+
+
+	return nil
 }
