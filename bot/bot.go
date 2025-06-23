@@ -47,7 +47,9 @@ func StartBot() {
 
 	fmt.Printf("Authorized on account %s\n", bot.Self.UserName)
 
+
 	u := tgbotapi.NewUpdate(0)
+	
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
