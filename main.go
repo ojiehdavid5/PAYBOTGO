@@ -16,7 +16,7 @@ func main() {
 	// Set up routes
 	app.Post("/api/auth/register", handler.Register)
 	app.Post("/api/auth/login", handler.Login)
-
+	app.Post("/api/auth/verify", handler.VerifyOTP)
 	// Connect to the database
 	config.ConnectDB()
 
