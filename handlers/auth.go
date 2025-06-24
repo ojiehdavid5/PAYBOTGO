@@ -36,6 +36,9 @@ func Register(c *fiber.Ctx) error {
 	}
 	user := models.Student{
 		Email:    req.Email,
+		Password: req.Password,
+		FirstName: req.FirstName,
+		LastName: req.LastName,
 	}
 	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
 	if res.Error == nil {
@@ -43,6 +46,7 @@ func Register(c *fiber.Ctx) error {
 			"message": "user already exists",
 		})
 	}
+	fmt.Println(user.Email)
 
 	otp, err := utils.SendOTP(user.Email)
 	if err != nil {
@@ -89,7 +93,7 @@ func VerifyOTP(c *fiber.Ctx) error {
 		Email:    req.Email,
 		Password: utils.GeneratePassword(req.Password),
 	}
-
+fmt.Println("ok")
 	res := config.DB.Create(&user)
 	if res.Error != nil {
 		return c.Status(400).JSON(fiber.Map{

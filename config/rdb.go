@@ -27,6 +27,5 @@ func ConnectRedis() (*redis.Client, error) {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	fmt.Println("Connected to Redis")
 	return rdb, nil
 }

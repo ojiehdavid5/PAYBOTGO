@@ -140,6 +140,7 @@ func StartBot() {
 				fmt.Println(session.Otp)
 
 				err := callAPI("/api/auth/verify", payload)
+				fmt.Println(err)
 				if err != nil {
 					bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
 				} else {

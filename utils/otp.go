@@ -71,6 +71,9 @@ func verifyOTP(ctx context.Context, userID, otp string) (bool, error) {
 	return false, nil
 }
 func SendOTP(userID string) (string, error) {
+	if userID == "" {
+		return "", fmt.Errorf("userID cannot be empty")
+	}
 	// Generate a random OTP
 	otp, err := GenerateOTP(6)
 	if err != nil {
@@ -89,6 +92,9 @@ func SendOTP(userID string) (string, error) {
 	return otp, nil
 }
 func VerifyOTP(userID, otp string) (bool, error) {
+	if userID == "" {
+		return false, fmt.Errorf("userID cannot be empty")
+	}
 	// Verify the OTP
 	isValid, err := verifyOTP(context.Background(), userID, otp)
 	if err != nil {
