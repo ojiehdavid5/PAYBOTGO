@@ -108,31 +108,6 @@ func StartBot() {
 				}
 
 
-							case "awaiting_otp":
-				session.Otp = text
-
-				first, last := splitName(session.FullName)
-
-				payload := map[string]interface{}{
-					"first_name":  first,
-					"last_name":   last,
-					"email":       session.Email,
-					"password":    session.Password,
-					"telegram_id": chatID,
-					"otp":         session.Otp,
-				}
-				fmt.Println(payload)
-
-				err := callAPI("/api/auth/verify", payload)
-				fmt.Println(err)
-				if err != nil {
-					bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
-				} else {
-					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
-				}
-
-				delete(userStates, chatID) // Clear session after attempt
-
 				
 
 			case "awaiting_login_email":
@@ -155,6 +130,29 @@ func StartBot() {
 				}
 				fmt.Println(payload)
 				bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
+
+			case "awaiting_otp":
+				session.Otp = text
+
+				first, last := splitName(session.FullName)
+
+				payload := map[string]interface{}{
+					"first_name":  first,
+					"last_name":   last,
+					"email":       session.Email,
+					"password":    session.Password,
+					"telegram_id": chatID,
+					"otp":         session.Otp,
+				}
+				fmt.Println(payload)
+
+				err := callAPI("/api/auth/verify", payload)
+				fmt.Println(err)
+				if err != nil {
+					bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
+				} else {
+					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
+				}
 
 			}
 
