@@ -1,30 +1,27 @@
 package bot
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
-
-	// "github.com/chuks/PAYBOTGO/config"
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"strings"
 )
 
-// UserSession represents the state of a user's registration process
 type UserSession struct {
 	Step     string
 	FullName string
 	Email    string
 	Password string
+	Passkey  string
 	Otp      string
 }
 
-// Global map to store user states
 var userStates = make(map[int64]*UserSession)
 
 func StartBot() {
@@ -33,7 +30,6 @@ func StartBot() {
 		log.Fatal("Error loading .env file")
 	}
 
-	// Get the bot token from the environment variable
 	token := os.Getenv("TELEGRAM_APITOKEN")
 	if token == "" {
 		log.Fatal("TELEGRAM_APITOKEN environment variable is not set")
@@ -45,13 +41,10 @@ func StartBot() {
 	}
 
 	bot.Debug = true
-
 	fmt.Printf("Authorized on account %s\n", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
-
 	u.Timeout = 60
-
 	updates := bot.GetUpdatesChan(u)
 
 	for update := range updates {
@@ -61,7 +54,6 @@ func StartBot() {
 
 		chatID := update.Message.Chat.ID
 		text := update.Message.Text
-
 		session, exists := userStates[chatID]
 
 		if !exists && text == "/register" {
@@ -76,40 +68,53 @@ func StartBot() {
 				session.FullName = text
 				session.Step = "awaiting_email"
 				bot.Send(tgbotapi.NewMessage(chatID, "What's your email?"))
+
 			case "awaiting_email":
 				session.Email = text
 				session.Step = "awaiting_password"
 				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+
 			case "awaiting_password":
 				session.Password = text
-				delete(userStates, chatID) // remove session
+				session.Step = "awaiting_passkey"
+				bot.Send(tgbotapi.NewMessage(chatID, "Set a 4–6 digit passkey (PIN) for payment confirmation:"))
+
+			case "awaiting_passkey":
+				session.Passkey = text
+				session.Step = "awaiting_otp"
+				bot.Send(tgbotapi.NewMessage(chatID, "OTP sent to your email. Please enter it using /verify_otp"))
+
+			case "awaiting_otp":
+				session.Otp = text
 
 				first, last := splitName(session.FullName)
+
 				payload := map[string]interface{}{
 					"first_name":  first,
 					"last_name":   last,
 					"email":       session.Email,
 					"password":    session.Password,
+					"passkey":     session.Passkey,
 					"telegram_id": chatID,
+					"otp":         session.Otp,
 				}
-				err := callAPI("/api/auth/register", payload)
 
-				fmt.Println(err)
-
+				err := callAPI("/api/auth/verify", payload)
 				if err != nil {
-					bot.Send(tgbotapi.NewMessage(chatID, err.Error()))
-					return
+					bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
 				} else {
-					bot.Send(tgbotapi.NewMessage(chatID, "OTP SENT TO YOUR EMAIL verify /verify_otp"))
+					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
+					delete(userStates, chatID) // clear session only after verification
 				}
 
 			case "awaiting_login_email":
 				session.Email = text
 				session.Step = "awaiting_login_password"
 				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+
 			case "awaiting_login_password":
 				session.Password = text
-				delete(userStates, chatID) // remove session
+				delete(userStates, chatID)
 
 				payload := map[string]any{
 					"email":    session.Email,
@@ -121,62 +126,37 @@ func StartBot() {
 				} else {
 					bot.Send(tgbotapi.NewMessage(chatID, "Login successful."))
 				}
-				fmt.Println(payload)
-				bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
-
-			case "awaiting_otp":
-				session.Otp = text
-				delete(userStates, chatID) // Clear session after attempt
-				
-				// first, last := splitName(session.FullName)
-
-				payload := map[string]interface{}{
-					// "first_name":  first,
-					// "last_name":   last,
-					"email":       session.Email,
-					"password":    session.Password,
-					"telegram_id": chatID,
-					"otp":         session.Otp,
-				}
-				fmt.Println(payload)
-
-				err := callAPI("/api/auth/verify", payload)
-				fmt.Println(err)
-				if err != nil {
-					bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
-				} else {
-					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
-				}
-
 			}
-
 			continue
-
 		}
 
+		// Handle commands
 		switch text {
 		case "/start":
 			bot.Send(tgbotapi.NewMessage(chatID, "Welcome! Use /register or /login."))
 
 		case "/register":
-			bot.Send(tgbotapi.NewMessage(chatID, "Send your details like: `FirstName|LastName|email@example.com|password`"))
+			bot.Send(tgbotapi.NewMessage(chatID, "Let's register you. What's your full name?"))
 			userStates[chatID] = &UserSession{Step: "awaiting_name"}
 
 		case "/login":
-			bot.Send(tgbotapi.NewMessage(chatID, "Send email"))
+			bot.Send(tgbotapi.NewMessage(chatID, "Enter your email:"))
 			userStates[chatID] = &UserSession{Step: "awaiting_login_email"}
 
 		case "/verify_otp":
-			bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
-			userStates[chatID] = &UserSession{Step: "awaiting_otp"}
+			if session != nil {
+				session.Step = "awaiting_otp"
+				bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
+			} else {
+				bot.Send(tgbotapi.NewMessage(chatID, "No pending verification. Please register first."))
+			}
 
 		default:
-			bot.Send(tgbotapi.NewMessage(chatID, "Invalid command."))
-
+			bot.Send(tgbotapi.NewMessage(chatID, "Invalid command. Use /register or /login."))
 		}
 	}
-
 }
+
 func splitName(fullName string) (string, string) {
 	names := strings.Fields(fullName)
 	if len(names) > 1 {
@@ -185,22 +165,19 @@ func splitName(fullName string) (string, string) {
 	return fullName, ""
 }
 
-// Helper function to call API (you need to implement this)
 func callAPI(endpoint string, payload map[string]interface{}) error {
-
-	// Implement API call logic here
 	jsonData, _ := json.Marshal(payload)
 	resp, err := http.Post("http://localhost:3000"+endpoint, "application/json", bytes.NewBuffer(jsonData))
-
-	fmt.Println(err)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusBadRequest {
-		return fmt.Errorf("user already exists")
+		return fmt.Errorf("bad request (e.g. user already exists)")
 	}
-
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("unexpected response: %s", resp.Status)
+	}
 	return nil
 }
