@@ -71,8 +71,7 @@ func VerifyOTP(c *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-	fmt.Println("ok")
-
+fmt.Println(req)
 	valid, err := utils.VerifyOTP(req.Email, req.OTP) // Pass the actual OTP value
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
