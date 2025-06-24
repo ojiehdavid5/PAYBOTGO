@@ -134,11 +134,11 @@ func StartBot() {
 				session.Otp = text
 				delete(userStates, chatID) // Clear session after attempt
 				
-				// first, last := splitName(session.FullName)
+				first, last := splitName(session.FullName)
 
 				payload := map[string]interface{}{
-					// "first_name":  first,
-					// "last_name":   last,
+					"first_name":  first,
+					"last_name":   last,
 					"email":       session.Email,
 					"password":    session.Password,
 					"telegram_id": chatID,
