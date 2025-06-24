@@ -137,7 +137,7 @@ func StartBot() {
 					"telegram_id": chatID,
 					"otp":         session.Otp,
 				}
-				fmt.Println(session.Otp)
+				fmt.Println(first)
 
 				err := callAPI("/api/auth/verify", payload)
 				fmt.Println(err)
