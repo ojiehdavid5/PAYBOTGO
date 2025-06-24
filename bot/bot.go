@@ -82,7 +82,6 @@ func StartBot() {
 				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
 			case "awaiting_password":
 				session.Password = text
-				delete(userStates, chatID) // remove session
 
 				// case "awaiting_passkey":
 				// session.Passkey = text
@@ -114,7 +113,6 @@ func StartBot() {
 				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
 			case "awaiting_login_password":
 				session.Password = text
-				delete(userStates, chatID) // remove session
 
 				payload := map[string]any{
 					"email":    session.Email,
