@@ -22,7 +22,6 @@ type UserSession struct {
 	Email    string
 	Password string
 	Otp      string
-	Passkey string
 }
 
 // Global map to store user states
@@ -85,10 +84,10 @@ func StartBot() {
 				session.Password = text
 				delete(userStates, chatID) // remove session
 
-				case "awaiting_passkey":
-				session.Passkey = text
-				session.Step = "awaiting_otp"
-				bot.Send(tgbotapi.NewMessage(chatID, "OTP sent to your email. Please enter it using /verify_otp"))
+				// case "awaiting_passkey":
+				// session.Passkey = text
+				// session.Step = "awaiting_otp"
+				// bot.Send(tgbotapi.NewMessage(chatID, "OTP sent to your email. Please enter it using /verify_otp"))
 
 				first, last := splitName(session.FullName)
 				payload := map[string]interface{}{
