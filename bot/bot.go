@@ -172,7 +172,7 @@ func StartBot() {
 			bot.Send(tgbotapi.NewMessage(chatID, "Send email"))
 			userStates[chatID] = &UserSession{Step: "awaiting_login_email"}
 
-		case "/verify_otp":
+		case "/verify_otp " ,"/verify_otp":
 			bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
 			userStates[chatID] = &UserSession{Step: "awaiting_otp"}
 
