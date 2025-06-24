@@ -107,28 +107,8 @@ func StartBot() {
 					bot.Send(tgbotapi.NewMessage(chatID, "OTP SENT TO YOUR EMAIL verify /verify_otp"))
 				}
 
-			case "awaiting_login_email":
-				session.Email = text
-				session.Step = "awaiting_login_password"
-				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
-			case "awaiting_login_password":
-				session.Password = text
-				delete(userStates, chatID) // remove session
 
-				payload := map[string]any{
-					"email":    session.Email,
-					"password": session.Password,
-				}
-				err := callAPI("/api/auth/login", payload)
-				if err != nil {
-					bot.Send(tgbotapi.NewMessage(chatID, "Login failed."))
-				} else {
-					bot.Send(tgbotapi.NewMessage(chatID, "Login successful."))
-				}
-				fmt.Println(payload)
-				bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
-
-			case "awaiting_otp":
+							case "awaiting_otp":
 				session.Otp = text
 
 				first, last := splitName(session.FullName)
@@ -150,6 +130,31 @@ func StartBot() {
 				} else {
 					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
 				}
+
+				delete(userStates, chatID) // Clear session after attempt
+
+				
+
+			case "awaiting_login_email":
+				session.Email = text
+				session.Step = "awaiting_login_password"
+				bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+			case "awaiting_login_password":
+				session.Password = text
+				delete(userStates, chatID) // remove session
+
+				payload := map[string]any{
+					"email":    session.Email,
+					"password": session.Password,
+				}
+				err := callAPI("/api/auth/login", payload)
+				if err != nil {
+					bot.Send(tgbotapi.NewMessage(chatID, "Login failed."))
+				} else {
+					bot.Send(tgbotapi.NewMessage(chatID, "Login successful."))
+				}
+				fmt.Println(payload)
+				bot.Send(tgbotapi.NewMessage(chatID, "Login submitted."))
 
 			}
 
