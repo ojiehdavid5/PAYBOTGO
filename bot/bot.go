@@ -151,7 +151,6 @@ func StartBot() {
 				} else {
 					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
 				}
-				delete(userStates, chatID) // Clear session after attempt
 
 			}
 
