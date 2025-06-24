@@ -107,7 +107,6 @@ func StartBot() {
 				} else {
 					bot.Send(tgbotapi.NewMessage(chatID, "OTP SENT TO YOUR EMAIL verify /verify_otp"))
 				}
-				
 
 			case "awaiting_login_email":
 				session.Email = text
@@ -132,8 +131,7 @@ func StartBot() {
 
 			case "awaiting_otp":
 				session.Otp = text
-				delete(userStates, chatID) // Clear session after attempt
-				
+
 				first, last := splitName(session.FullName)
 
 				payload := map[string]interface{}{
@@ -153,6 +151,7 @@ func StartBot() {
 				} else {
 					bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified successfully. You are now registered!"))
 				}
+				delete(userStates, chatID) // Clear session after attempt
 
 			}
 
