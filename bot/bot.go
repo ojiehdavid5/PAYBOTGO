@@ -127,6 +127,7 @@ func StartBot() {
 			case "awaiting_otp":
 				session.Otp = text
 				delete(userStates, chatID) // Clear session after attempt
+				
 				first, last := splitName(session.FullName)
 
 				payload := map[string]interface{}{
