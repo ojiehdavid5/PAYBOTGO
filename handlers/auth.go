@@ -46,7 +46,6 @@ func Register(c *fiber.Ctx) error {
 			"message": "user already exists",
 		})
 	}
-	fmt.Println(user.Email)
 
 	otp, err := utils.SendOTP(user.Email)
 	if err != nil {
