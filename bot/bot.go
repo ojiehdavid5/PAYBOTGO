@@ -104,7 +104,7 @@ func StartBot() {
 					bot.Send(tgbotapi.NewMessage(chatID, err.Error()))
 					return
 				} else {
-					bot.Send(tgbotapi.NewMessage(chatID, "OTP SENT TO YOUR EMAIL verify /verify_otp"))
+					bot.Send(tgbotapi.NewMessage(chatID, "OTP SENT TO YOUR EMAIL verify /"))
 				}
 
 
