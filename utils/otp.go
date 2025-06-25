@@ -39,7 +39,7 @@ func StoreOTP(ctx context.Context, userID, otp string, expiration time.Duration)
 
 	return rdb.Set(ctx, key, otp, expiration).Err()
 }
-func verifyOTP(ctx context.Context, userID, otp string) (bool, error) {
+func VerifyOTPInternal(ctx context.Context, userID, otp string) (bool, error) {
 
 	key := fmt.Sprintf("otp:%s", userID)
 	rdb, err := config.ConnectRedis()
@@ -96,7 +96,7 @@ func VerifyOTP(userID, otp string) (bool, error) {
 		return false, fmt.Errorf("userID cannot be empty")
 	}
 	// Verify the OTP
-	isValid, err := verifyOTP(context.Background(), userID, otp)
+	isValid, err := VerifyOTPInternal(context.Background(), userID, otp)
 	if err != nil {
 		return false, err
 	}
