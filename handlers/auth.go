@@ -12,17 +12,17 @@ import (
 type authRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
 
 type otpRequest struct {
-		FirstName string `json:"first_name"`
+	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 
-	OTP      string `json:"otp"` // Corrected field name
+	OTP string `json:"otp"` // Corrected field name
 }
 
 func Register(c *fiber.Ctx) error {
@@ -35,10 +35,10 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 	user := models.Student{
-		Email:    req.Email,
-		Password: req.Password,
+		Email:     req.Email,
+		Password:  req.Password,
 		FirstName: req.FirstName,
-		LastName: req.LastName,
+		LastName:  req.LastName,
 	}
 	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
 	if res.Error == nil {
@@ -71,7 +71,7 @@ func VerifyOTP(c *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
-fmt.Println(req)
+	fmt.Println(req)
 	valid, err := utils.VerifyOTP(req.Email, req.OTP) // Pass the actual OTP value
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -88,10 +88,10 @@ fmt.Println(req)
 	user := models.Student{
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
-		Email:    req.Email,
-		Password: utils.GeneratePassword(req.Password),
+		Email:     req.Email,
+		Password:  utils.GeneratePassword(req.Password),
 	}
-fmt.Println("ok")
+	fmt.Println("ok")
 	res := config.DB.Create(&user)
 	if res.Error != nil {
 		return c.Status(400).JSON(fiber.Map{
