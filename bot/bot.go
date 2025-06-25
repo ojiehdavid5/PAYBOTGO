@@ -173,13 +173,10 @@ func StartBot() {
 			userStates[chatID] = &UserSession{Step: "awaiting_login_email"}
 
 		case "/verify_otp ","/verity_otp" :
-			if session, exists := userStates[chatID]; exists {
-		session.Step = "awaiting_otp"
-		bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
-	} else {
-		bot.Send(tgbotapi.NewMessage(chatID, "Please register first using /register"))
-	}
-
+			bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
+if session, exists := userStates[chatID]; exists {
+	session.Step = "awaiting_otp"
+}
 		default:
 			bot.Send(tgbotapi.NewMessage(chatID, "Invalid command."))
 
