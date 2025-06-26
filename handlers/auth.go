@@ -21,7 +21,6 @@ type otpRequest struct {
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
-
 	OTP string `json:"otp"` // Corrected field name
 }
 
@@ -92,13 +91,12 @@ func VerifyOTP(c *fiber.Ctx) error {
 		Password:  utils.GeneratePassword(req.Password),
 	}
 	fmt.Println("ok")
-		res:= config.DB.Where("email = ?", user.Email).First(&models.Student{})
+	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
 	if res.Error == nil {
 		return c.Status(400).JSON(fiber.Map{
 			"message": "user already exists",
 		})
 	}
-
 
 	res = config.DB.Create(&user)
 	if res.Error != nil {
