@@ -22,7 +22,7 @@ type otpRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	OTP string `json:"otp"` // Corrected field name
-	Passkey string `json:"passskey"`
+	Passkey string `json:"passkey"`
 }
 
 func Register(c *fiber.Ctx) error {
