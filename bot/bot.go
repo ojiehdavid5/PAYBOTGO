@@ -18,8 +18,9 @@ type UserSession struct {
 	Step     string
 	FullName string
 	Email    string
-	Password string
 	Passkey  string
+
+	Password string
 	Otp      string
 }
 
