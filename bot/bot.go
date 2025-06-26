@@ -19,6 +19,7 @@ type UserSession struct {
 	FullName string
 	Email    string
 	Password string
+	Passkey  string
 	Otp      string
 }
 
@@ -93,6 +94,10 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 		session.Email = text
 		session.Step = "awaiting_password"
 		bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+	case "awaiting_Passkey":
+		session.Passkey = text
+		session.Step = "awaiting_passkey"
+		bot.Send(tgbotapi.NewMessage(chatID, "Enter your passkey to make payment:"))
 	case "awaiting_password":
 		session.Password = text
 		sendRegistration(bot, chatID, session)
@@ -125,6 +130,7 @@ func sendRegistration(bot *tgbotapi.BotAPI, chatID int64, session *UserSession) 
 		"last_name":   last,
 		"email":       session.Email,
 		"password":    session.Password,
+		"passkey":     session.Passkey,
 		"telegram_id": chatID,
 	}
 	err := callAPI("/api/auth/register", payload)
@@ -156,6 +162,7 @@ func sendOTPVerification(bot *tgbotapi.BotAPI, chatID int64, session *UserSessio
 		"last_name":   last,
 		"email":       session.Email,
 		"password":    session.Password,
+		"passkey":     session.Passkey,
 		"telegram_id": chatID,
 		"otp":         session.Otp,
 	}

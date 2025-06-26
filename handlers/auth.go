@@ -22,6 +22,7 @@ type otpRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	OTP string `json:"otp"` // Corrected field name
+	Passkey string `json:"passskey"`
 }
 
 func Register(c *fiber.Ctx) error {
@@ -89,6 +90,7 @@ func VerifyOTP(c *fiber.Ctx) error {
 		LastName:  req.LastName,
 		Email:     req.Email,
 		Password:  utils.GeneratePassword(req.Password),
+		Passkey: req.Passkey,
 	}
 	fmt.Println("ok")
 	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
