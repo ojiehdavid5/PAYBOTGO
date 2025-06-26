@@ -93,11 +93,11 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 	case "awaiting_email":
 		session.Email = text
 		session.Step = "awaiting_passkey"
-		bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
+		bot.Send(tgbotapi.NewMessage(chatID, "Enter your Passkey:"))
 	case "awaiting_Passkey":
 		session.Passkey = text
 		session.Step = "awaiting_password"
-		bot.Send(tgbotapi.NewMessage(chatID, "Enter your passkey to make payment:"))
+		bot.Send(tgbotapi.NewMessage(chatID, "Enter your password:"))
 	case "awaiting_password":
 		session.Password = text
 		sendRegistration(bot, chatID, session)
