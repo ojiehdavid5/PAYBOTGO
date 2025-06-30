@@ -11,6 +11,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
+	"github.com/chuks/PAYBOTGO/paystack"
 )
 
 // UserSession represents a user's session state
@@ -80,10 +81,19 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		session.Step = "awaiting_otp"
 		bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
 		return true
+	case "/pay":
+		// Assume session has user email
+		link, err := paystack.CreatePaymentLink(session.Email, 50000) // 500 NGN
+		if err != nil {
+			bot.Send(tgbotapi.NewMessage(chatID, "Error creating payment link: "+err.Error()))
+			return true
+		}
+		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
+		bot.Send(msg)
 	default:
 		return false
 	}
-}
+	return true}
 
 func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session *UserSession) {
 	switch session.Step {
