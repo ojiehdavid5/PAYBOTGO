@@ -92,10 +92,11 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		}
 		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
 		bot.Send(msg)
-case "/link_account":
+		case "/link_account":
 	go func() {
 		url, err := mono.InitiateMonoAccountLink(chatID)
 		if err != nil {
+			log.Println("🔴 MONO ERROR:", err)
 			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to initiate Mono account linking. Try again later."))
 		} else {
 			msg := fmt.Sprintf("🔗 Click below to link your account securely via Mono:\n\n%s", url)
@@ -103,11 +104,12 @@ case "/link_account":
 		}
 	}()
 	return true
+
 	default:
 		return false
 	}
-return false}
-
+return false
+}
 
 func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session *UserSession) {
 	switch session.Step {
