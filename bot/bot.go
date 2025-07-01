@@ -11,7 +11,6 @@ import (
 
 	"github.com/chuks/PAYBOTGO/config"
 	"github.com/chuks/PAYBOTGO/models"
-	"github.com/chuks/PAYBOTGO/paystack"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
@@ -83,16 +82,16 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		session.Step = "awaiting_otp"
 		bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
 		return true
-	case "/pay":
-		fmt.Println("Creating Paystack link for:", session.Email)
-		// Assume session has user email
-		link, err := paystack.CreatePaymentLink(session.Email, 50000) // 500 NGN
-		if err != nil {
-			bot.Send(tgbotapi.NewMessage(chatID, "Error creating payment link: "+err.Error()))
-			return true
-		}
-		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
-		bot.Send(msg)
+	// case "/pay":
+	// 	fmt.Println("Creating Paystack link for:", session.Email)
+	// 	// Assume session has user email
+	// 	link, err := paystack.CreatePaymentLink(session.Email, 50000) // 500 NGN
+	// 	if err != nil {
+	// 		bot.Send(tgbotapi.NewMessage(chatID, "Error creating payment link: "+err.Error()))
+	// 		return true
+	// 	}
+	// 	msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
+	// 	bot.Send(msg)
 	case "/link_account":
 		go func() {
 			var student models.Student
@@ -210,7 +209,7 @@ func sendLogin(bot *tgbotapi.BotAPI, chatID int64, session *UserSession) {
 	if err != nil {
 		bot.Send(tgbotapi.NewMessage(chatID, "Login failed: "+err.Error()))
 	} else {
-		bot.Send(tgbotapi.NewMessage(chatID, "✅ Login successful. Proceed to payment /pay"))
+		bot.Send(tgbotapi.NewMessage(chatID, "✅ Login successful. Proceed to payment link your account with Mono using /link_account."))
 	}
 }
 
