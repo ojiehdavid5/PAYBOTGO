@@ -93,6 +93,7 @@ func VerifyOTP(c *fiber.Ctx) error {
 		Email:     req.Email,
 		Password:  utils.GeneratePassword(req.Password),
 		Passkey: req.Passkey,
+		TelegramID: req.TelegramID,
 	}
 	fmt.Println("ok")
 	res := config.DB.Where("email = ?", user.Email).First(&models.Student{})
