@@ -12,7 +12,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"github.com/chuks/PAYBOTGO/paystack"
-	"github.com/chuks/PAYBOTGO/mono"
 )
 
 // UserSession represents a user's session state
@@ -94,13 +93,28 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		bot.Send(msg)
 		case "/link_account":
 	go func() {
-		url, err := mono.InitiateMonoAccountLink(chatID)
+		// Use your student info
+		req := map[string]interface{}{
+			"name":  session.FullName,
+			"email": session.Email,
+		}
+
+		body, _ := json.Marshal(req)
+		resp, err := http.Post("http://localhost:3000/api/mono/initiate", "application/json", bytes.NewBuffer(body))
 		if err != nil {
-			log.Println("🔴 MONO ERROR:", err)
-			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to initiate Mono account linking. Try again later."))
-		} else {
-			msg := fmt.Sprintf("🔗 Click below to link your account securely via Mono:\n\n%s", url)
+			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to connect to Mono API"))
+			return
+		}
+		defer resp.Body.Close()
+
+		var res map[string]string
+		json.NewDecoder(resp.Body).Decode(&res)
+
+		if link, ok := res["link"]; ok {
+			msg := fmt.Sprintf("🔗 Click to link your bank account via Mono:\n%s", link)
 			bot.Send(tgbotapi.NewMessage(chatID, msg))
+		} else {
+			bot.Send(tgbotapi.NewMessage(chatID, "❌ Mono account linking failed."))
 		}
 	}()
 	return true

@@ -1,57 +1,76 @@
 package mono
 
+
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 )
 
-func InitiateMonoAccountLink(telegramID int64) (string, error) {
-	reqBody := map[string]interface{}{
-		"data": map[string]interface{}{
-			"type":      "one_time", // or "recurring"
-			"reference": fmt.Sprintf("student_%d", telegramID),
+type Customer struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type Meta struct {
+	Ref string `json:"ref"`
+}
+
+type RequestBody struct {
+	Customer    Customer `json:"customer"`
+	Meta        Meta     `json:"meta"`
+	Scope       string   `json:"scope"`
+	RedirectURL string   `json:"redirect_url"`
+}
+
+type MonoResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		MonoURL    string `json:"mono_url"`
+		CustomerID string `json:"customer"`
+		Meta       Meta   `json:"meta"`
+	} `json:"data"`
+}
+
+func InitiateMonoLink(name, email, ref string) (*MonoResponse, error) {
+	reqBody := RequestBody{
+		Customer: Customer{
+			Name:  name,
+			Email: email,
 		},
+		Meta: Meta{Ref: ref},
+		Scope:       "auth",
+		RedirectURL: "https://mono.co",
 	}
+
 	jsonData, _ := json.Marshal(reqBody)
 
 	req, err := http.NewRequest("POST", "https://api.withmono.com/v2/accounts/initiate", bytes.NewBuffer(jsonData))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("mono-sec-key", os.Getenv("MONO_PUBLIC_KEY")) // Make sure this is correct!
+	req.Header.Set("mono-sec-key", os.Getenv("MONO_SECRET_KEY"))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var result map[string]interface{}
-	bodyBytes, _ := io.ReadAll(resp.Body)
-
-	fmt.Println("🔎 RAW MONO RESPONSE:", string(bodyBytes))
-
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
-		return "", fmt.Errorf("failed to parse Mono response: %v", err)
+	var result MonoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
 	}
 
-	// 👇 Properly extract the nested mono_url
-	data, ok := result["data"].(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("missing data field in Mono response")
+	if result.Status != "successful" {
+		return nil, fmt.Errorf("mono failed: %s", result.Message)
 	}
 
-	link, ok := data["mono_url"].(string)
-	if !ok {
-		return "", fmt.Errorf("mono_url not found in Mono response")
-	}
-
-	return link, nil
+	return &result, nil
 }

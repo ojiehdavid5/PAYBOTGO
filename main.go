@@ -33,6 +33,8 @@ func main() {
 	}
 	return c.SendStatus(fiber.StatusOK)
 })
+app.Post("/api/mono/initiate", handler.InitiateMonoHandler)
+
 
 	// Connect to the database
 	config.ConnectDB()
