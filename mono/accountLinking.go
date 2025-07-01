@@ -37,12 +37,14 @@ func InitiateMonoAccountLink(telegramID int64) (string, error) {
 		return "", err
 	}
 
-	link, ok := result["mono_url"].(string)
+	data, ok := result["data"].(map[string]interface{})
 	if !ok {
-		// Optional: log full response for debugging
-		fmt.Printf("Mono response: %+v\n", result)
-		return "", fmt.Errorf("link not found in Mono response")
+		return "", fmt.Errorf("data field not found in response")
 	}
 
+	link, ok := data["mono_url"].(string)
+	if !ok {
+		return "", fmt.Errorf("mono_url not found in data")
+	}
 	return link, nil
 }
