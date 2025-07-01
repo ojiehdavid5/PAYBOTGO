@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 )
@@ -33,18 +34,24 @@ func InitiateMonoAccountLink(telegramID int64) (string, error) {
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+	bodyBytes, _ := io.ReadAll(resp.Body)
+
+	fmt.Println("🔎 RAW MONO RESPONSE:", string(bodyBytes))
+
+	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+		return "", fmt.Errorf("failed to parse Mono response: %v", err)
 	}
 
+	// 👇 Properly extract the nested mono_url
 	data, ok := result["data"].(map[string]interface{})
 	if !ok {
-		return "", fmt.Errorf("data field not found in response")
+		return "", fmt.Errorf("missing data field in Mono response")
 	}
 
 	link, ok := data["mono_url"].(string)
 	if !ok {
-		return "", fmt.Errorf("mono_url not found in data")
+		return "", fmt.Errorf("mono_url not found in Mono response")
 	}
+
 	return link, nil
 }
