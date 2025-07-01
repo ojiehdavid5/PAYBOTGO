@@ -115,7 +115,7 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 
 			body, _ := json.Marshal(req)
 			fmt.Println("🔍 Mono payload:", string(body))
-			resp, err := http.Post("http://localhost:3000/api/mono/initiate", "application/json", bytes.NewBuffer(body))
+			resp, err := http.Post("https://api.withmono.com/v2/accounts/initiate", "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to connect to Mono API"))
 				return
