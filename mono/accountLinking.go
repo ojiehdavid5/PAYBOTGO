@@ -37,7 +37,7 @@ func InitiateMonoAccountLink(telegramID int64) (string, error) {
 		return "", err
 	}
 
-	link, ok := result["link"].(string)
+	link, ok := result["mono_url"].(string)
 	if !ok {
 		// Optional: log full response for debugging
 		fmt.Printf("Mono response: %+v\n", result)
