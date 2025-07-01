@@ -224,7 +224,7 @@ func sendOTPVerification(bot *tgbotapi.BotAPI, chatID int64, session *UserSessio
 		bot.Send(tgbotapi.NewMessage(chatID, "OTP verification failed: "+err.Error()))
 	} else {
 		delete(userStates, chatID)
-		bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified. You are now registered!"))
+		bot.Send(tgbotapi.NewMessage(chatID, "✅ OTP verified. You are now registered! let link you account with mono /link_account"))
 	}
 }
 
