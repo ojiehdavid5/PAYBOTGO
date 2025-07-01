@@ -7,4 +7,5 @@ type Student struct {
 	Email     string `gorm:"unique;not null"`
 	Password  string `gorm:"not null"` // hashed
 	Passkey   string `gorm:"not null"`
+	 TelegramID int64 `gorm:"not null"`
 }

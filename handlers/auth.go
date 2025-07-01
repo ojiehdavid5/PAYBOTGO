@@ -23,6 +23,8 @@ type otpRequest struct {
 	Password  string `json:"password"`
 	OTP string `json:"otp"` // Corrected field name
 	Passkey string `json:"passkey"`
+	   TelegramID int64  `json:"telegram_id"`
+
 }
 
 func Register(c *fiber.Ctx) error {
