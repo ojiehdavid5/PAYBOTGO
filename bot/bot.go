@@ -91,9 +91,13 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		}
 		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
 		bot.Send(msg)
-		case "/link_account":
+case "/link_account":
 	go func() {
-		// Use your student info
+		if session.FullName == "" || session.Email == "" {
+			bot.Send(tgbotapi.NewMessage(chatID, "❗ Please register first using /register before linking your account."))
+			return
+		}
+
 		req := map[string]interface{}{
 			"name":  session.FullName,
 			"email": session.Email,
