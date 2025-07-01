@@ -54,7 +54,7 @@ func InitiateMonoLink(name, email, ref string) (*MonoResponse, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("mono-sec-key", os.Getenv("MONO_SECRET_KEY"))
+	req.Header.Set("mono-sec-key", os.Getenv("MONO_PUBLIC_KEY"))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
