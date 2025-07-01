@@ -12,6 +12,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 	"github.com/chuks/PAYBOTGO/paystack"
+	"github.com/chuks/PAYBOTGO/mono"
 )
 
 // UserSession represents a user's session state
@@ -82,6 +83,7 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		bot.Send(tgbotapi.NewMessage(chatID, "Enter the OTP sent to your email:"))
 		return true
 	case "/pay":
+		fmt.Println("Creating Paystack link for:", session.Email)
 		// Assume session has user email
 		link, err := paystack.CreatePaymentLink(session.Email, 50000) // 500 NGN
 		if err != nil {
@@ -90,10 +92,22 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		}
 		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
 		bot.Send(msg)
+case "/link_account":
+	go func() {
+		url, err := mono.InitiateMonoAccountLink(chatID)
+		if err != nil {
+			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to initiate Mono account linking. Try again later."))
+		} else {
+			msg := fmt.Sprintf("🔗 Click below to link your account securely via Mono:\n\n%s", url)
+			bot.Send(tgbotapi.NewMessage(chatID, msg))
+		}
+	}()
+	return true
 	default:
 		return false
 	}
-	return true}
+return false}
+
 
 func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session *UserSession) {
 	switch session.Step {
@@ -162,7 +176,7 @@ func sendLogin(bot *tgbotapi.BotAPI, chatID int64, session *UserSession) {
 	if err != nil {
 		bot.Send(tgbotapi.NewMessage(chatID, "Login failed: "+err.Error()))
 	} else {
-		bot.Send(tgbotapi.NewMessage(chatID, "✅ Login successful."))
+		bot.Send(tgbotapi.NewMessage(chatID, "✅ Login successful. Proceed to payment /pay"))
 	}
 }
 
