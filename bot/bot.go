@@ -9,9 +9,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/chuks/PAYBOTGO/config"
+	"github.com/chuks/PAYBOTGO/models"
+	"github.com/chuks/PAYBOTGO/paystack"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
-	"github.com/chuks/PAYBOTGO/paystack"
 )
 
 // UserSession represents a user's session state
@@ -91,52 +93,54 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		}
 		msg := tgbotapi.NewMessage(chatID, "Click below to pay securely via Paystack 👇\n"+link)
 		bot.Send(msg)
-case "/link_account":
-	go func() {
-		if session.FullName == "" || session.Email == "" {
-			bot.Send(tgbotapi.NewMessage(chatID, "❗ Please register first using /register before linking your account."))
-			return
-		}
+	case "/link_account":
+		go func() {
+			var student models.Student
+			result := config.DB.Where("telegram_id = ?", chatID).First(&student)
+			if result.Error != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❗ No registered user found. Use /register first."))
+				return
+			}
 
-req := map[string]interface{}{
-    "customer": map[string]string{
-        "name":  session.FullName,
-        "email": session.Email,
-    },
-    "meta": map[string]string{
-        "ref": fmt.Sprintf("student_%d", chatID),
-    },
-    "scope":        "auth",
-    "redirect_url": "https://mono.co",
-}
+			req := map[string]interface{}{
+				"customer": map[string]string{
+					"name":  student.FirstName + " " + student.LastName,
+					"email": student.Email,
+				},
+				"meta": map[string]string{
+					"ref": fmt.Sprintf("student_%d", chatID),
+				},
+				"scope":        "auth",
+				"redirect_url": "https://mono.co",
+			}
 
-		body, _ := json.Marshal(req)
-		fmt.Println("🔍 Mono payload:", string(body))
-		resp, err := http.Post("http://localhost:3000/api/mono/initiate", "application/json", bytes.NewBuffer(body))
-		if err != nil {
-			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to connect to Mono API"))
-			return
-		}
-		defer resp.Body.Close()
+			body, _ := json.Marshal(req)
+			fmt.Println("🔍 Mono payload:", string(body))
+			resp, err := http.Post("http://localhost:3000/api/mono/initiate", "application/json", bytes.NewBuffer(body))
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to connect to Mono API"))
+				return
+			}
+			defer resp.Body.Close()
 
-		var res map[string]string
-		json.NewDecoder(resp.Body).Decode(&res)
+			var res map[string]string
+			json.NewDecoder(resp.Body).Decode(&res)
 
-		fmt.Println("🔍 Mono response:", res)
+			fmt.Println("🔍 Mono response:", res)
 
-		if link, ok := res["mono_url"]; ok {
-			msg := fmt.Sprintf("🔗 Click to link your bank account via Mono:\n%s", link)
-			bot.Send(tgbotapi.NewMessage(chatID, msg))
-		} else {
-			bot.Send(tgbotapi.NewMessage(chatID, "❌ Mono account linking failed."))
-		}
-	}()
-	return true
+			if link, ok := res["mono_url"]; ok {
+				msg := fmt.Sprintf("🔗 Click to link your bank account via Mono:\n%s", link)
+				bot.Send(tgbotapi.NewMessage(chatID, msg))
+			} else {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Mono account linking failed."))
+			}
+		}()
+		return true
 
 	default:
 		return false
 	}
-return false
+	return false
 }
 
 func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session *UserSession) {
