@@ -122,7 +122,7 @@ req := map[string]interface{}{
 		var res map[string]string
 		json.NewDecoder(resp.Body).Decode(&res)
 
-		if link, ok := res["link"]; ok {
+		if link, ok := res["mono_url"]; ok {
 			msg := fmt.Sprintf("🔗 Click to link your bank account via Mono:\n%s", link)
 			bot.Send(tgbotapi.NewMessage(chatID, msg))
 		} else {
