@@ -98,10 +98,17 @@ case "/link_account":
 			return
 		}
 
-		req := map[string]interface{}{
-			"name":  session.FullName,
-			"email": session.Email,
-		}
+req := map[string]interface{}{
+    "customer": map[string]string{
+        "name":  session.FullName,
+        "email": session.Email,
+    },
+    "meta": map[string]string{
+        "ref": fmt.Sprintf("student_%d", chatID),
+    },
+    "scope":        "auth",
+    "redirect_url": "https://mono.co",
+}
 
 		body, _ := json.Marshal(req)
 		resp, err := http.Post("http://localhost:3000/api/mono/initiate", "application/json", bytes.NewBuffer(body))
