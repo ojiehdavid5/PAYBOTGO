@@ -23,7 +23,7 @@ func InitiateMonoAccountLink(telegramID int64) (string, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("mono-sec-key", "test_pk_fqdjxmqwhot8bx09b1qp")
+	req.Header.Set("mono-sec-key", "test_sk_vpz4bdoyx9wyanmbr2j3")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
