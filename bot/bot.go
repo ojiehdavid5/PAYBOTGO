@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/chuks/PAYBOTGO/config"
+	handler "github.com/chuks/PAYBOTGO/handlers"
 	"github.com/chuks/PAYBOTGO/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -129,7 +130,9 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 			}
 		}()
 		return true
-
+case "/balance":
+		handler.HandleBalanceCheck(bot, chatID)
+		return true
 	default:
 	}
 	return false

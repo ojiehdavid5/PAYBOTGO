@@ -41,7 +41,7 @@ func ConnectDB() {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	err = db.AutoMigrate(&models.Student{})
+	err = db.AutoMigrate(&models.Student{},&models.MonoSession{})
 	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}

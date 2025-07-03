@@ -8,4 +8,6 @@ type MonoSession struct {
 	Reference   string `gorm:"unique"`
 	MonoURL     string
 	CustomerID  string
+	AccountID  string
+
 }

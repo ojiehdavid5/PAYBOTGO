@@ -1,19 +1,24 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"os"
 
 	// "github.com/chuks/PAYBOTGO/config"
 	// "github.com/chuks/PAYBOTGO/models"
-	"github.com/gofiber/fiber/v2"
+	"github.com/chuks/PAYBOTGO/config"
+	"github.com/chuks/PAYBOTGO/models"
 	"github.com/chuks/PAYBOTGO/mono"
+	"github.com/gofiber/fiber/v2"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type MonoInitRequest struct {
 	StudentID uint   `json:"student_id"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
-	
 }
 
 func InitiateMonoHandler(c *fiber.Ctx) error {
@@ -47,4 +52,48 @@ func InitiateMonoHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"link": result.Data.MonoURL,
 	})
+}
+
+func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
+	go func() {
+		var student models.Student
+		dbResult := config.DB.Where("telegram_id = ?", chatID).First(&student)
+		if dbResult.Error != nil {
+			bot.Send(tgbotapi.NewMessage(chatID, "❗ No registered user found. Use /register first."))
+			return
+		}
+
+		var session models.MonoSession
+		if err := config.DB.Where("student_id = ?", student.ID).First(&session).Error; err != nil {
+			bot.Send(tgbotapi.NewMessage(chatID, "❗ Account not linked yet. Use /link_account first."))
+			return
+		}
+
+		if session.AccountID == "" {
+			bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Mono account not available yet. Please wait for confirmation."))
+			return
+		}
+
+		url := fmt.Sprintf("https://api.withmono.com/v2/accounts/%s/balance", session.AccountID)
+		req, _ := http.NewRequest("GET", url, nil)
+		req.Header.Set("mono-sec-key", os.Getenv("MONO_SECRET_KEY"))
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to check balance."))
+			return
+		}
+		defer resp.Body.Close()
+
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+
+		if balance, ok := result["balance"].(float64); ok {
+			msg := fmt.Sprintf("💰 Your account balance is: ₦%.2f", balance/100)
+			bot.Send(tgbotapi.NewMessage(chatID, msg))
+		} else {
+			bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not retrieve balance."))
+		}
+	}()
 }
