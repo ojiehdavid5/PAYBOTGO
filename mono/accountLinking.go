@@ -43,7 +43,7 @@ func InitiateMonoLink(name, email, ref string) (*MonoResponse, error) {
 		},
 		Meta: Meta{Ref: ref},
 		Scope:       "auth",
-		RedirectURL: "https://t.me/Studentpay_bot",
+		RedirectURL: " https://b5e4-105-112-30-52.ngrok-free.app/webhooks/mono",
 	}
 
 	jsonData, _ := json.Marshal(reqBody)
