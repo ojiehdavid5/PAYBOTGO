@@ -102,15 +102,9 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 			}
 
 			req := map[string]interface{}{
-				"customer": map[string]string{
-					"name":  student.FirstName + " " + student.LastName,
-					"email": student.Email,
-				},
-				"meta": map[string]string{
-					"ref": fmt.Sprintf("student_%d", chatID),
-				},
-				"scope":        "auth",
-				"redirect_url": "https://mono.co",
+				"student_id": student.ID,
+				"name":       student.FirstName + " " + student.LastName,
+				"email":      student.Email,
 			}
 
 			body, _ := json.Marshal(req)
@@ -127,7 +121,7 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 
 			fmt.Println("🔍 Mono response:", res)
 
-			if link, ok := res["mono_url"]; ok {
+			if link, ok := res["link"]; ok {
 				msg := fmt.Sprintf("🔗 Click to link your bank account via Mono:\n%s", link)
 				bot.Send(tgbotapi.NewMessage(chatID, msg))
 			} else {
@@ -137,7 +131,6 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		return true
 
 	default:
-		return false
 	}
 	return false
 }
