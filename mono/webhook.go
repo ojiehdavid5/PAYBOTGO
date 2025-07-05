@@ -32,6 +32,7 @@ func HandleMonoWebhook(c *fiber.Ctx) error {
 
 		// 👉 Store to DB or perform any action here
 		// For example, you might want to link the Mono account with the user in your database
+		
 		return c.SendStatus(200)
 	}
 
