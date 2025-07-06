@@ -3,6 +3,8 @@ package mono
 import (
 	"fmt"
 
+	"github.com/chuks/PAYBOTGO/config"
+	"github.com/chuks/PAYBOTGO/models"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -32,7 +34,20 @@ func HandleMonoWebhook(c *fiber.Ctx) error {
 
 		// 👉 Store to DB or perform any action here
 		// For example, you might want to link the Mono account with the user in your database
-		
+		var session models.MonoSession
+		// Lookup MonoSession using CustomerID
+		result := config.DB.Where("customer_id = ?", customerID).First(&session)
+		if result.Error != nil {
+			return c.Status(404).JSON(fiber.Map{"error": "no matching session found"})
+		}
+
+		// Update AccountID in that session
+		session.AccountID = accountID
+		if err := config.DB.Save(&session).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "failed to update session"})
+		}
+
+		fmt.Println("✅ MonoSession updated with AccountID")
 		return c.SendStatus(200)
 	}
 

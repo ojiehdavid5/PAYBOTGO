@@ -43,7 +43,7 @@ func InitiateMonoLink(name, email, ref string) (*MonoResponse, error) {
 		},
 		Meta: Meta{Ref: ref},
 		Scope:       "auth",
-		RedirectURL: "  https://874c-105-112-192-152.ngrok-free.app/webhooks/mono",
+		RedirectURL: "   https://d50d-105-112-194-216.ngrok-free.app/webhooks/mono",
 	}
 
 	jsonData, _ := json.Marshal(reqBody)
