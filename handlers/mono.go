@@ -135,12 +135,13 @@ func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 json.NewDecoder(resp.Body).Decode(&result)
 
 if data, ok := result["data"].(map[string]interface{}); ok {
-	if balance, ok := data["available_balance"].(float64); ok {
+	if balance, ok := data["balance"].(float64); ok {
 		msg := fmt.Sprintf("💰 Your account balance is: ₦%.2f", balance/100)
 		bot.Send(tgbotapi.NewMessage(chatID, msg))
 		return
 	}
 }
+
 bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not retrieve balance."))
 	}()
 }
