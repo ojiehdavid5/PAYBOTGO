@@ -133,7 +133,7 @@ func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 
 		var result map[string]interface{}
 json.NewDecoder(resp.Body).Decode(&result)
-
+ fmt.Println("🔍 Mono balance response:", result)
 if data, ok := result["data"].(map[string]interface{}); ok {
 	if balance, ok := data["balance"].(float64); ok {
 		msg := fmt.Sprintf("💰 Your account balance is: ₦%.2f", balance/100)
