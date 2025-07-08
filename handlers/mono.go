@@ -143,5 +143,6 @@ if data, ok := result["data"].(map[string]interface{}); ok {
 }
 
 bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not retrieve balance."))
+
 	}()
 }
