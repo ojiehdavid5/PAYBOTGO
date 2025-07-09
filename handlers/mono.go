@@ -11,8 +11,8 @@ import (
 	"github.com/chuks/PAYBOTGO/config"
 	"github.com/chuks/PAYBOTGO/models"
 	"github.com/chuks/PAYBOTGO/mono"
-	"github.com/gofiber/fiber/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/gofiber/fiber/v2"
 )
 
 type MonoInitRequest struct {
@@ -53,8 +53,6 @@ type MonoInitRequest struct {
 // 		"link": result.Data.MonoURL,
 // 	})
 // }
-
-
 
 func InitiateMonoHandler(c *fiber.Ctx) error {
 	var req MonoInitRequest
@@ -98,7 +96,6 @@ func InitiateMonoHandler(c *fiber.Ctx) error {
 	})
 }
 
-
 func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 	go func() {
 		var student models.Student
@@ -129,21 +126,21 @@ func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 			bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to check balance."))
 			return
 		}
+
 		defer resp.Body.Close()
 
-		
 		var result map[string]interface{}
-json.NewDecoder(resp.Body).Decode(&result)
- fmt.Println("🔍 Mono balance response:", result)
-if data, ok := result["data"].(map[string]interface{}); ok {
-	if balance, ok := data["balance"].(float64); ok {
-		msg := fmt.Sprintf("💰 Your account balance is: ₦%.2f", balance/100)
-		bot.Send(tgbotapi.NewMessage(chatID, msg))
-		return
-	}
-}
+		json.NewDecoder(resp.Body).Decode(&result)
+		fmt.Println("🔍 Mono balance response:", result)
+		if data, ok := result["data"].(map[string]interface{}); ok {
+			if balance, ok := data["balance"].(float64); ok {
+				msg := fmt.Sprintf("💰 Your account balance is: ₦%.2f", balance/100)
+				bot.Send(tgbotapi.NewMessage(chatID, msg))
+				return
+			}
+		}
 
-bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not retrieve balance."))
+		bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not retrieve balance."))
 
 	}()
 }
