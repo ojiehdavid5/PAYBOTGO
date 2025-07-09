@@ -131,6 +131,7 @@ func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 		}
 		defer resp.Body.Close()
 
+		
 		var result map[string]interface{}
 json.NewDecoder(resp.Body).Decode(&result)
  fmt.Println("🔍 Mono balance response:", result)
