@@ -8,10 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/chuks/PAYBOTGO/config"
 	handler "github.com/chuks/PAYBOTGO/handlers"
 	"github.com/chuks/PAYBOTGO/models"
+	"github.com/chuks/PAYBOTGO/utils"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
 )
@@ -130,9 +132,39 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 			}
 		}()
 		return true
-case "/balance":
+	case "/balance":
 		handler.HandleBalanceCheck(bot, chatID)
 		return true
+	case "/receipt":
+		go func() {
+			var student models.Student
+			dbResult := config.DB.Where("telegram_id = ?", chatID).First(&student)
+			if dbResult.Error != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❗ No registered user found. Use /register first."))
+				return
+			}
+
+			// Simulate a transaction
+			to := student.Email
+			amount := 100000 // ₦1,000.00 in kobo
+			txnID := fmt.Sprintf("TXN%d", time.Now().Unix())
+
+			// Generate PDF
+			pdfPath, err := utils.GenerateReceiptPDF(to, amount, txnID)
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to generate receipt: "+err.Error()))
+				return
+			}
+
+			// Send PDF
+			doc := tgbotapi.NewDocument(chatID, tgbotapi.FilePath(pdfPath))
+			doc.Caption = fmt.Sprintf("🧾 Receipt for ₦%.2f", float64(amount)/100)
+			if _, err := bot.Send(doc); err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Error sending receipt: "+err.Error()))
+			}
+		}()
+		return true
+
 	default:
 	}
 	return false
