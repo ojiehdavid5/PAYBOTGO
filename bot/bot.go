@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -27,6 +28,10 @@ type UserSession struct {
 
 	Password string
 	Otp      string
+
+	AirtimePhone   string
+	AirtimeAmount  string
+	AirtimeNetwork string
 }
 
 var userStates = make(map[int64]*UserSession)
@@ -164,6 +169,10 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 			}
 		}()
 		return true
+	case "/airtime":
+		session.Step = "awaiting_airtime_phone"
+		bot.Send(tgbotapi.NewMessage(chatID, "📞 Enter the phone number to recharge:"))
+		return true
 
 	default:
 	}
@@ -197,6 +206,31 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 	case "awaiting_otp":
 		session.Otp = text
 		sendOTPVerification(bot, chatID, session)
+	case "awaiting_airtime_phone":
+		session.AirtimePhone = text
+		session.Step = "awaiting_airtime_amount"
+		bot.Send(tgbotapi.NewMessage(chatID, "💵 Enter the amount (e.g. 500):"))
+
+	case "awaiting_airtime_amount":
+		session.AirtimeAmount = text
+		session.Step = "awaiting_airtime_network"
+		bot.Send(tgbotapi.NewMessage(chatID, "📡 Enter the network (mtn, glo, airtel, 9mobile):"))
+
+	case "awaiting_airtime_network":
+		session.AirtimeNetwork = strings.ToLower(text)
+		go func() {
+			bot.Send(tgbotapi.NewMessage(chatID, "⏳ Processing airtime request..."))
+
+			err := sendAirtime(session.AirtimePhone, session.AirtimeAmount)
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to send airtime: "+err.Error()))
+			} else {
+				msg := fmt.Sprintf("✅ Airtime of ₦%s successfully sent to %s (%s)", session.AirtimeAmount, session.AirtimePhone, session.AirtimeNetwork)
+				bot.Send(tgbotapi.NewMessage(chatID, msg))
+			}
+		}()
+		session.Step = "" // reset step
+
 	}
 }
 
@@ -281,4 +315,44 @@ func splitName(fullName string) (string, string) {
 		return names[0], strings.Join(names[1:], " ")
 	}
 	return fullName, ""
+}
+func sendAirtime(phone, amount string) error {
+	payload := map[string]interface{}{
+		"network":        "1",             // Fixed for MTN
+		"amount":         amount,
+		"mobile_number":  phone,
+		"Ported_number":  true,
+		"airtime_type":   "VTU",
+	}
+
+	jsonData, _ := json.Marshal(payload)
+	fmt.Println("🔍 VTU payload:", string(jsonData))
+
+	req, err := http.NewRequest("POST", "https://mtsvtu.com/api/topup/", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	apiToken := os.Getenv("VTU_API_TOKEN")
+	if apiToken == "" {
+		return fmt.Errorf("VTU API token not set in environment")
+	}
+
+// VTU_API_TOKEN="5051f0e5e0787cb41dbebe9d2793684892954b65"
+	req.Header.Set("Authorization", "Token  " + apiToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API error: %s", string(bodyBytes))
+	}
+
+	return nil
 }
