@@ -221,7 +221,7 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 		go func() {
 			bot.Send(tgbotapi.NewMessage(chatID, "⏳ Processing airtime request..."))
 
-			err := sendAirtime(session.AirtimePhone, session.AirtimeAmount)
+			err := handler.SendAirtime(session.AirtimePhone, session.AirtimeAmount)
 			if err != nil {
 				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to send airtime: "+err.Error()))
 			} else {
@@ -318,11 +318,11 @@ func splitName(fullName string) (string, string) {
 }
 func sendAirtime(phone, amount string) error {
 	payload := map[string]interface{}{
-		"network":        "1",             // Fixed for MTN
-		"amount":         amount,
-		"mobile_number":  phone,
-		"Ported_number":  true,
-		"airtime_type":   "VTU",
+		"network":       "1", // Fixed for MTN
+		"amount":        amount,
+		"mobile_number": phone,
+		"Ported_number": true,
+		"airtime_type":  "VTU",
 	}
 
 	jsonData, _ := json.Marshal(payload)
@@ -338,8 +338,8 @@ func sendAirtime(phone, amount string) error {
 		return fmt.Errorf("VTU API token not set in environment")
 	}
 
-// VTU_API_TOKEN="5051f0e5e0787cb41dbebe9d2793684892954b65"
-	req.Header.Set("Authorization", "Token  " + apiToken)
+	// VTU_API_TOKEN="5051f0e5e0787cb41dbebe9d2793684892954b65"
+	req.Header.Set("Authorization", "Token  "+apiToken)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
