@@ -144,3 +144,48 @@ func HandleBalanceCheck(bot *tgbotapi.BotAPI, chatID int64) {
 
 	}()
 }
+
+
+func InitiatePayment(c *fiber.Ctx) error {
+	var body struct {
+		StudentID uint   `json:"student_id"`
+		Amount    int    `json:"amount"` // in kobo
+		Description string `json:"description"`
+	}
+
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
+	}
+
+	var student models.Student
+	if err := config.DB.First(&student, body.StudentID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Student not found"})
+	}
+
+	var session models.MonoSession
+	if err := config.DB.Where("student_id = ?", student.ID).First(&session).Error; err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "No linked Mono account"})
+	}
+
+	if session.AccountID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Mono AccountID missing"})
+	}
+
+	ref := fmt.Sprintf("pay_ref_%d_%d", student.ID, body.Amount)
+	link, err := mono.InitiateDirectPay(mono.DirectPayRequest{
+		Amount:     body.Amount,
+		Account:    session.AccountID,
+		CustomerID: session.CustomerID,
+		Email:      student.Email,
+		Name:       student.FirstName + " " + student.LastName,
+		Phone:      "08122334455", // Fake for sandbox
+		Reference:  ref,
+		Description: body.Description,
+	})
+
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"payment_link": link})
+}

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -32,6 +33,8 @@ type UserSession struct {
 	AirtimePhone   string
 	AirtimeAmount  string
 	AirtimeNetwork string
+	PayAmount string
+
 }
 
 var userStates = make(map[int64]*UserSession)
@@ -174,6 +177,11 @@ func handleCommand(bot *tgbotapi.BotAPI, chatID int64, text string, session *Use
 		bot.Send(tgbotapi.NewMessage(chatID, "📞 Enter the phone number to recharge:"))
 		return true
 
+	case "/pay":
+		session.Step = "awaiting_pay_amount"
+		bot.Send(tgbotapi.NewMessage(chatID, "💵 Enter the amount you want to pay (in Naira):"))
+		return true
+
 	default:
 	}
 	return false
@@ -229,7 +237,75 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 				bot.Send(tgbotapi.NewMessage(chatID, msg))
 			}
 		}()
-		session.Step = "" // reset step
+		// session.Step = "" // reset step
+	case "awaiting_pay_amount":
+		session.PayAmount = text
+		go func() {
+			var student models.Student
+			if err := config.DB.Where("telegram_id = ?", chatID).First(&student).Error; err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❗ Student not found. Use /register first."))
+				return
+			}
+
+			var monoSession models.MonoSession
+			if err := config.DB.Where("student_id = ?", student.ID).First(&monoSession).Error; err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❗ You need to /link_account first."))
+				return
+			}
+
+			amountInt, err := strconv.Atoi(session.PayAmount)
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Invalid amount. Please enter a number."))
+				return
+			}
+
+			payload := map[string]interface{}{
+				"amount":       amountInt * 100, // kobo
+				"type":         "onetime-debit",
+				"method":       "account",
+				"account":      monoSession.AccountID,
+				"description":  "Student bill payment",
+				"reference":    fmt.Sprintf("ref_%d", time.Now().Unix()),
+				"redirect_url": "https://mono.co",
+				"customer": map[string]interface{}{
+					"email":   student.Email,
+					"phone":   "08122334455",
+					"address": "school hostel",
+					"name":    student.FirstName + " " + student.LastName,
+					"identity": map[string]string{
+						"type":   "bvn",
+						"number": "22110033445", // test only; replace in prod
+					},
+				},
+				"meta": map[string]string{},
+			}
+
+			data, _ := json.Marshal(payload)
+			req, _ := http.NewRequest("POST", "https://api.withmono.com/v2/payments/initiate", bytes.NewBuffer(data))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("mono-sec-key", os.Getenv("MONO_SECRET_KEY"))
+
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Payment initiation failed."))
+				return
+			}
+			defer resp.Body.Close()
+
+			var res map[string]interface{}
+			json.NewDecoder(resp.Body).Decode(&res)
+
+			if data, ok := res["data"].(map[string]interface{}); ok {
+				if link, ok := data["checkout_url"].(string); ok {
+					bot.Send(tgbotapi.NewMessage(chatID, "🔗 Click below to authorize the payment:\n"+link))
+					return
+				}
+			}
+
+			bot.Send(tgbotapi.NewMessage(chatID, "⚠️ Could not initiate payment."))
+		}()
+		session.Step = ""
 
 	}
 }
