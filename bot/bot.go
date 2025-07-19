@@ -33,8 +33,7 @@ type UserSession struct {
 	AirtimePhone   string
 	AirtimeAmount  string
 	AirtimeNetwork string
-	PayAmount string
-
+	PayAmount      string
 }
 
 var userStates = make(map[int64]*UserSession)
@@ -294,7 +293,15 @@ func handleConversation(bot *tgbotapi.BotAPI, chatID int64, text string, session
 			defer resp.Body.Close()
 
 			var res map[string]interface{}
-			json.NewDecoder(resp.Body).Decode(&res)
+			// json.NewDecoder(resp.Body).Decode(&res)
+
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			fmt.Println("🧾 Mono response body:", string(bodyBytes))
+
+			if err := json.Unmarshal(bodyBytes, &res); err != nil {
+				bot.Send(tgbotapi.NewMessage(chatID, "❌ Failed to parse Mono response."))
+				return
+			}
 
 			if data, ok := res["data"].(map[string]interface{}); ok {
 				if link, ok := data["checkout_url"].(string); ok {
