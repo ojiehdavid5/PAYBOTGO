@@ -49,6 +49,7 @@ func StartBot() {
 	if err != nil {
 		log.Fatalf("Failed to create bot: %v", err)
 	}
+	
 
 	bot.Debug = true
 	fmt.Printf("Authorized on account %s\n", bot.Self.UserName)
